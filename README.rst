@@ -1,6 +1,6 @@
 This is is the **pacbio_qc** pipeline from the `Sequana <https://sequana.readthedocs.org>`_ projet
 
-:Overview: QC on pacbio BAM files
+:Overview: Quality control for pacbio BAM files (raw data)
 :Input: BAM files provided by Pacbio Sequencers
 :Output: HTML reports with various plots including taxonomic plot
 :Status: draft
@@ -25,9 +25,17 @@ Usage
 ::
 
     sequana_pipelines_pacbio_qc --help
-    sequana_pipelines_pacbio_qc --input-directory DATAPATH 
+    sequana_pipelines_pacbio_qc --input-directory DATAPATH
 
-This creates a directory with the pipeline and configuration file. You will then need 
+
+iIf you want to filter out some BAM files, you may use the pattern in tab 'input data'.
+
+In the configuration tab, in the kraken section add as many databases
+as you wish. You may simply unset the first database to skip the taxonomy, which
+is experimental.
+
+
+This creates a directory with the pipeline and configuration file. You will then need
 to execute the pipeline::
 
     cd pacbio_qc
@@ -54,8 +62,11 @@ This pipelines requires the following executable(s):
 Details
 ~~~~~~~~~
 
-This pipeline runs **pacbio_qc** in parallel on the input BAM files. 
-A brief sequana summary report is also produced.
+This pipeline takes as inputs a set of BAM files from Pacbio sequencers. It
+computes a set of basic statistics related to the read lengths. It also shows
+some histograms related to the GC content, SNR of the diodes and the so-called ZMW
+values. Finally, a quick taxonomy can be performed using Kraken. HTML reports
+are created for each sample as well as a multiqc summary page.
 
 
 Rules and configuration details
@@ -64,3 +75,12 @@ Rules and configuration details
 Here is the `latest documented configuration file <https://raw.githubusercontent.com/sequana/sequana_pacbio_qc/master/sequana_pipelines/pacbio_qc/config.yaml>`_
 to be used with the pipeline. Each rule used in the pipeline may have a section in the configuration file. 
 
+
+bam_to_fasta
+^^^^^^^^^^^^
+
+.. snakemakerule:: bam_to_fasta
+
+pacbio_quality
+^^^^^^^^^^^^^^^^^^^^
+.. snakemakerule:: pacbio_quality
