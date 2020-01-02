@@ -1,0 +1,5 @@
+doc/build
+test/.snakemake/
+__pycache__/
+.coverage
+sequana_*.egg-info/
