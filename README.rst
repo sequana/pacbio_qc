@@ -1,8 +1,8 @@
 This is is the **pacbio_qc** pipeline from the `Sequana <https://sequana.readthedocs.org>`_ projet
 
-:Overview: TODO 
-:Input: TODO
-:Output: TODO
+:Overview: QC on pacbio BAM files
+:Input: BAM files provided by Pacbio Sequencers
+:Output: HTML reports with various plots including taxonomic plot
 :Status: draft
 :Citation: Cokelaer et al, (2017), ‘Sequana’: a Set of Snakemake NGS pipelines, Journal of Open Source Software, 2(16), 352, JOSS DOI doi:10.21105/joss.00352
 
@@ -45,7 +45,8 @@ Requirements
 
 This pipelines requires the following executable(s):
 
-- TODO
+- kraken
+- multiqc
 
 .. image:: https://raw.githubusercontent.com/sequana/sequana_pacbio_qc/master/sequana_pipelines/pacbio_qc/dag.png
 
@@ -53,7 +54,7 @@ This pipelines requires the following executable(s):
 Details
 ~~~~~~~~~
 
-This pipeline runs **pacbio_qc** in parallel on the input fastq files (paired or not). 
+This pipeline runs **pacbio_qc** in parallel on the input BAM files. 
 A brief sequana summary report is also produced.
 
 

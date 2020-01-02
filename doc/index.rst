@@ -1,9 +1,9 @@
 Sequana pacbio_qc pipeline documentation
 #####################################################
 
-|version|, |today|, status: production
+|version|, |today|, status: draft
 
-The **pacbio_qc** pipeline is a `Sequana <https://github.com/sequana/sequana>`_ pipeline. You can find the source code 
+The **pacbio_qc** pipeline is a `Sequana <https://github.com/sequana/sequana>`__ pipeline. You can find the source code 
 on  `https://github.com/sequana/sequana_pacbio_qc <https://github.com/sequana/sequana_pacbio_qc/>`_. Would you have issues
 about the code, usage or lack of information, please fill a report 
 on `Sequana itself <https://github.com/sequana/sequana/issues>`_ indicating the pipeline name (We centralized all 
@@ -33,9 +33,9 @@ What is Sequana ?
        taxonomy of your FastQ. This requires dedicated databases to be downloaded.
     #. Sequanix, a GUI for Snakemake workflows (hence Sequana pipelines as well)
 
-To join the project, please let us know on `github <https://github.com/sequana/sequana/issues/306>`_.
+To join the project, please let us know on `github <https://github.com/sequana/sequana/issues/306>`__.
 
-For more information, please see `github <https://sequana.readthedocs.io>`_.
+For more information, please see `github <https://sequana.readthedocs.io>`__.
 
 
 

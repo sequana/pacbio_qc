@@ -8,7 +8,7 @@ from sequana.pipelines_common import get_pipeline_location as getpath
 sharedir = getpath('pacbio_qc')
 
 
-def test_standalone_subprocess():
+def _test_standalone_subprocess():
     directory = tempfile.TemporaryDirectory()
     cmd = """sequana_pipelines_pacbio_qc --input-directory {} 
             --working-directory {} --force""".format(sharedir, directory.name)
@@ -24,7 +24,6 @@ def test_standalone_script():
 
 def test_full1():
     with tempfile.TemporaryDirectory() as directory:
-        print(directory)
         wk = directory
         cmd = "sequana_pipelines_pacbio_qc --input-directory {} "
         cmd += "--working-directory {}  --force --skip-kraken"
@@ -37,9 +36,8 @@ def test_full1():
 
 def test_full2():
     with tempfile.TemporaryDirectory() as directory:
-        print(directory)
         wk = directory
-        database="~/.config/sequana/toydb"
+        database=os.path.expanduser("~/.config/sequana/kraken_toydb")
         cmd = "sequana_pipelines_pacbio_qc --input-directory {} "
         cmd += "--working-directory {}  --force --kraken-databases {}"
         cmd = cmd.format(sharedir, wk, database)
