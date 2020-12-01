@@ -1,12 +1,53 @@
+# -*- coding: utf-8 -*-
+#
+#  This file is part of Sequana software
+#
+#  Copyright (c) 2016-2020 - Sequana Development Team
+#
+#  File author(s):
+#      Thomas Cokelaer <thomas.cokelaer@pasteur.fr>
+#
+#  Distributed under the terms of the 3-clause BSD license.
+#  The full license is in the LICENSE file, distributed with this software.
+#
+#  website: https://github.com/sequana/sequana
+#  documentation: http://sequana.readthedocs.io
+#
+##############################################################################
+
 import os
 
 from sequana import pacbio, sequana_data
 from sequana import snaketools as sm
 
+# This must be defined before the include
 configfile: "config.yaml"
 
-manager = sm.PipelineManagerGeneric("pacbio_qc", config)
-sm.message("Number of samples: %d" % len(manager.ff.realpaths))
+# Generic include of some dynamic modules
+
+# A convenient manager
+def func(filename):
+    # pacbio data are either BAM of FastQ files
+    # if BAM, they may contain a .css.bam extension if the data is made of CCS
+    # if output of LIMA tool, you may also have a barcode info such as
+    # lbc32-lbc32 and so on. So a file may be called lima_output.lbc32.ccs.bam
+    # and the next one lima_output.lb33.ccs.bam. Therefore the sample name is
+    # only contaons in the barcode. Removing .ccs.bam is a solution
+    # So we will remove the first extension (e.g. .bam, .fastq) including
+    # possible compressed extension
+    filename = filename.split("/")[-1]
+    if filename.endswith(".bam"):
+        return filename.rsplit(".bam")[0]
+    elif filename.endswith(".fastq"):
+        return filename.rsplit(".fastq")[0]
+    elif filename.endswith(".fastq.gz"):
+        return filename.rsplit(".fastq.gz")[0]
+    else:
+        raise IOError("Input files must end in .bam, .fastq, or .fastq.gz")
+manager = sm.PipelineManagerGeneric("pacbio_qc", config, sample_func=func)
+manager.setup(globals(), mode="warning")
+
+
 input_data = manager.getrawdata()
 
 
@@ -21,6 +62,7 @@ to_clean = []
 
 # Analysis the input Fasta , create pictures and summary file
 __pacbio_quality__input = input_data
+__pacbio_quality__sample_name = "{sample}"
 __pacbio_quality__output_summary = "{sample}/sequana_summary_pacbio_qc_{sample}.json"
 include: sm.modules["pacbio_quality"]
 to_clean.extend(expand(__bam_to_fasta__output_fasta, sample=manager.samples))
@@ -40,9 +82,9 @@ if config['kraken']['do'] is True:
 # Final results
 rule pipeline:
     input:
-        expand("{sample}/summary.html", sample=manager.samples),
-        extra_kraken,
-        "multiqc_report.html"
+        expand("{sample}/summary.html", sample=manager.samples), 
+        ".sequana/rulegraph.svg",
+        "multiqc/multiqc_report.html", "summary.json"
 
 
 # HTML reports
@@ -99,25 +141,148 @@ rule kraken:
             cmd += " {} ".format(dbname)
         shell(cmd)
 
-
+# FIXME resuse existing rules from sequana
 rule multiqc:
-    input: expand(__pacbio_quality__output_summary, sample=manager.samples)
-    output: "multiqc_report.html"
+    input: expand(__pacbio_quality__output_summary, sample=manager.samples) + extra_kraken
+    output: "multiqc/multiqc_report.html"
     params:
-        config=sequana_data("multiqc_config.yaml", "../multiqc")
+        config="multiqc_config.yaml"
     run:
         from subprocess import Popen
-        cmd = "multiqc . -f -m sequana_pacbio_qc -c {}".format(params.config)
+        cmd = "multiqc . -f -m sequana_pacbio_qc -c {} -o multiqc".format(params.config)
         process = Popen(cmd.split(), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         process.wait()
 
 
+rule plotting_and_stats:
+    input: expand(__pacbio_quality__output_summary, sample=manager.samples)
+    output: "summary.json"#, "summary.png"
+    run:
+        from sequana.summary import Summary
+        from sequana_pipelines.pacbio_qc import version
+
+        summary = Summary("pacbioqc", caller="sequana_pacbio_qc", sample_name="multi samples")
+        summary.description = "summary sequana_pacbio_qc pipeline"
+        summary.pipeline_version = version
+
+        import json
+        for filename in input:
+            data = json.load(open(filename, 'r'))
+            sample = data['sample']
+            summary.data[sample] = data['read_stats']
+            summary.data[sample]['sample'] = sample
+
+        summary.to_json("summary.json")
+
+
+
+__rulegraph__input = manager.snakefile
+__rulegraph__output = ".sequana/rulegraph.svg"
+__rulegraph__mapper = {"multiqc": "../multiqc/multiqc_report.html"}
+include: sm.modules['rulegraph']
+localrules: rulegraph
+
+
+
+localrules: multiqc, rulegraph
+
+
 onsuccess:
-    print("//cleaning temporary files")
     for this in to_clean:
         try:os.remove(this)
         except:pass
 
     # This was create by calling Module but is not needed
     shell('rm -rf css images js')
+
+
+    from sequana import logger
+    logger.level = "INFO"
+
+    # This should create the stats plot and the Makefile
+    manager.teardown()
+    manager.clean_multiqc("multiqc/multiqc_report.html")
+
+    # Now, the main HTML report
+    import pandas as pd
+    from sequana.utils.datatables_js import DataTable
+    import json
+
+    # Summary table with links towards fastqc 
+    data = json.load(open("summary.json", "r"))
+    df = pd.DataFrame(data['data'])
+    df = df.T
+    del df['sample']
+    df = df.reset_index().rename({'index': 'sample'}, axis=1)
+    for col in ['count', 'nb_reads', 'nb_bases', 'min', 'max', 'CCS_mean_passes', 'CCS_nb_reads']:
+        try: df[col] = [int(x) for x in df[col]]
+        except: pass
+    for col in ['mean', 'mean_GC', 'std']:
+        try: df[col] = [round(float(x), 2) for x in df[col]]
+        except: pass
+    for col in ['25%','50%','75%']:
+        del df[col]
+
+    df['link'] = ["{}/summary.html".format(x) for x in df['sample']] 
+
+    datatable = DataTable(df, 'pacbio_qc', index=False)
+    datatable.datatable.datatable_options = {'paging': 'false',
+                                              'buttons': ['copy', 'csv'],
+                                             'bSort': 'true',
+                                            'dom':"BRSPfrti"
+                                            }
+    datatable.datatable.set_links_to_column('link', 'sample')
+    js = datatable.create_javascript_function()
+    htmltable = datatable.create_datatable()
+
+    # The summary table at the top
+    from sequana_pipelines.pacbio_qc import version as vv
+    df_general = pd.DataFrame({
+        "samples": len(manager.samples),
+        "sequana_pacbio_qc_version": vv}, index=["summary"])
+
+    datatable = DataTable(df_general.T, 'general', index=True)
+    datatable.datatable.datatable_options = {'paging': 'false',
+                                            'bFilter': 'false',
+                                             'bInfo': 'false',
+                                              'header': 'false',
+                                             'bSort': 'true'}
+    js2 = datatable.create_javascript_function()
+    htmltable2 = datatable.create_datatable(style="width: 20%; float:left" )
+
+
+    from sequana.modules_report.summary import SummaryModule2
+    data = {
+            "name": manager.name,
+            "rulegraph": __rulegraph__output,
+            "stats": "stats.txt",
+            "pipeline_version": vv
+
+         }
+
+    # Here the is main HTML page report
+    contents = "<h2> General information</h2>"
+    contents += """<div style="float:left; width:30%">{}</div>""".format(js2 + htmltable2)
+    contents += """<p>Here below you can find a summary table with basic statistics about your reads. Click on the links in the first column of the table to jump to dedicated summary for your sample. There you can find histograms, and Kraken plots if taxonomy was set on. The multiac report (link below) is also usefil to compare the disfferent statistics. </p>"""
+
+
+    # the main table
+    contents += """<div style="clear:both"></div>"""
+    contents += """<hr>Please look at the <b><a href="multiqc/multiqc_report.html">multiqc report</a></b> for more details about your run.<br>"""
+    #contents += """A file with <a href="md5.txt">md5sum</a> is also available for the input file."""
+    contents += "<br><hr><div>Here is a summary for all the samples. The CSV button allows you to export the basic statistics.  {}</div>".format(js + htmltable)
+
+
+    s = SummaryModule2(data, intro=contents)
+
+
+    # finally, some cleanup
+    shell("rm -rf rulegraph")   # embedded in report
+    shell("chmod -R g+w .")
+
+
+
+
+
+
 

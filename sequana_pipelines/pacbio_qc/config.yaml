@@ -21,7 +21,7 @@ bam_to_fasta:
 # Provide as many databases as you want. They will be 
 # used sequentially.
 kraken:
-    do: yes
+    do: no
     thread: 4
     databases:
         - toydb

@@ -1,9 +1,19 @@
+
+
+.. image:: https://badge.fury.io/py/sequana-pacbio-qc.svg
+     :target: https://pypi.python.org/pypi/sequana_pacbio_qc
+
+.. image:: http://joss.theoj.org/papers/10.21105/joss.00352/status.svg
+    :target: http://joss.theoj.org/papers/10.21105/joss.00352
+    :alt: JOSS (journal of open source software) DOI
+
+
 This is is the **pacbio_qc** pipeline from the `Sequana <https://sequana.readthedocs.org>`_ projet
 
 :Overview: Quality control for pacbio BAM files (raw data)
 :Input: BAM files provided by Pacbio Sequencers
 :Output: HTML reports with various plots including taxonomic plot
-:Status: draft
+:Status: production
 :Citation: Cokelaer et al, (2017), ‘Sequana’: a Set of Snakemake NGS pipelines, Journal of Open Source Software, 2(16), 352, JOSS DOI doi:10.21105/joss.00352
 
 
@@ -53,7 +63,8 @@ Requirements
 
 This pipelines requires the following executable(s):
 
-- kraken
+- sequana
+- kraken2
 - multiqc
 
 .. image:: https://raw.githubusercontent.com/sequana/sequana_pacbio_qc/master/sequana_pipelines/pacbio_qc/dag.png
@@ -67,6 +78,26 @@ computes a set of basic statistics related to the read lengths. It also shows
 some histograms related to the GC content, SNR of the diodes and the so-called ZMW
 values. Finally, a quick taxonomy can be performed using Kraken. HTML reports
 are created for each sample as well as a multiqc summary page.
+
+Kraken databases are not provided with the pipeline. This step is optional and
+not used by default. 
+
+
+Changelog
+~~~~~~~~~
+========= ====================================================================
+Version   Description
+========= ====================================================================
+0.9.0
+========= ====================================================================
+
+
+Contribute & Code of Conduct
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To contribute to this project, please take a look at the 
+`Contributing Guidelines <https://github.com/sequana/sequana/blob/master/CONTRIBUTING.rst>`_ first. Please note that this project is released with a 
+`Code of Conduct <https://github.com/sequana/sequana/blob/master/CONDUCT.md>`_. By contributing to this project, you agree to abide by its terms.
 
 
 Rules and configuration details

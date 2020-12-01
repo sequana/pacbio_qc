@@ -12,3 +12,8 @@ mapping:
     "input_pattern":
         type: str
         required: False
+    "bam_to_fasta":
+      mapping:
+      "thread":
+        type: int
+

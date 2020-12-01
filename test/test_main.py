@@ -26,25 +26,25 @@ def test_full1():
     with tempfile.TemporaryDirectory() as directory:
         wk = directory
         cmd = "sequana_pipelines_pacbio_qc --input-directory {} "
-        cmd += "--working-directory {}  --force --skip-kraken"
+        cmd += "--working-directory {}  --force "
         cmd = cmd.format(sharedir, wk)
         subprocess.call(cmd.split())
 
         stat = subprocess.call("sh pacbio_qc.sh".split(), cwd=wk)
 
-        assert os.path.exists(wk + "/multiqc_report.html")
+        assert os.path.exists(wk + "/multiqc/multiqc_report.html")
 
 def test_full2():
     with tempfile.TemporaryDirectory() as directory:
         wk = directory
         database=os.path.expanduser("~/.config/sequana/kraken_toydb")
         cmd = "sequana_pipelines_pacbio_qc --input-directory {} "
-        cmd += "--working-directory {}  --force --kraken-databases {}"
+        cmd += "--working-directory {}  --force --do-kraken --kraken-databases {}"
         cmd = cmd.format(sharedir, wk, database)
         subprocess.call(cmd.split())
 
         stat = subprocess.call("sh pacbio_qc.sh".split(), cwd=wk)
-        assert os.path.exists(wk + "/multiqc_report.html")
+        assert os.path.exists(wk + "/multiqc/multiqc_report.html")
 
 def test_version():
     cmd = "sequana_pipelines_pacbio_qc --version"

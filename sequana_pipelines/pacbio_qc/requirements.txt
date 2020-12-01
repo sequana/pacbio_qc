@@ -1,2 +1,2 @@
-kraken
+kraken2
 multiqc
