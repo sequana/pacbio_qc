@@ -10,7 +10,7 @@
 
 This is is the **pacbio_qc** pipeline from the `Sequana <https://sequana.readthedocs.org>`_ projet
 
-:Overview: Quality control for pacbio BAM files (raw data)
+:Overview: Quality control for pacbio BAM files (raw data or CCS files)
 :Input: BAM files provided by Pacbio Sequencers
 :Output: HTML reports with various plots including taxonomic plot
 :Status: production
@@ -88,7 +88,8 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
-0.9.0
+0.9.0     First release of sequana_pacbio_qc using latest sequana rules and
+          modules (0.9.5)
 ========= ====================================================================
 
 
@@ -106,7 +107,8 @@ Rules and configuration details
 Here is the `latest documented configuration file <https://raw.githubusercontent.com/sequana/sequana_pacbio_qc/master/sequana_pipelines/pacbio_qc/config.yaml>`_
 to be used with the pipeline. Each rule used in the pipeline may have a section in the configuration file. 
 
-
+Notes for developers
+~~~~~~~~~~~~~~~~~~~~
 bam_to_fasta
 ^^^^^^^^^^^^
 
