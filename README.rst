@@ -107,13 +107,3 @@ Rules and configuration details
 Here is the `latest documented configuration file <https://raw.githubusercontent.com/sequana/sequana_pacbio_qc/master/sequana_pipelines/pacbio_qc/config.yaml>`_
 to be used with the pipeline. Each rule used in the pipeline may have a section in the configuration file. 
 
-Notes for developers
-~~~~~~~~~~~~~~~~~~~~
-bam_to_fasta
-^^^^^^^^^^^^
-
-.. snakemakerule:: bam_to_fasta
-
-pacbio_quality
-^^^^^^^^^^^^^^^^^^^^
-.. snakemakerule:: pacbio_quality
