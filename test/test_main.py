@@ -38,7 +38,7 @@ def test_full1():
 def test_full2():
     with tempfile.TemporaryDirectory() as directory:
         wk = directory
-        database=os.path.expanduser("~/.config/sequana/kraken_toydb")
+        database=(f"{sharedir}/toydb")
         cmd = "sequana_pacbio_qc --input-directory {} "
         cmd += "--working-directory {}  --force --do-kraken --kraken-databases {}"
         cmd = cmd.format(sharedir, wk, database)
