@@ -13,7 +13,35 @@ mapping:
         type: str
         required: False
     "bam_to_fasta":
-      mapping:
-      "thread":
-        type: int
+        type: map
+        mapping:
+           "thread":
+               type: int
+    "multiqc":
+        type: map
+        mapping:
+            "options":
+                type: str
+            "modules":
+                type: str
+            "config_file":
+                type: str
+            "input_directory":
+                type: str
+    "kraken":
+        type: map
+        mapping:
+          "do":
+            type: bool
+            required: True
+          "thread":
+            type: int
+            required: True
+            range: { min: 1 }
+          "databases":
+            type: any
+            required: True
+
+
+
 

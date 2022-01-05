@@ -17,17 +17,18 @@
 import sys
 import os
 import argparse
+import shutil
 import subprocess
 
 from sequana_pipetools.options import *
 from sequana_pipetools.misc import Colors
 from sequana_pipetools.info import sequana_epilog, sequana_prolog
+from sequana_pipetools import SequanaManager
 
 col = Colors()
 
 NAME = "pacbio_qc"
 
-# FIXME update sequana_pipetools
 class MyKrakenOptions():
     def __init__(self, group_name="section_kraken"):
         self.group_name = group_name
@@ -52,9 +53,12 @@ class MyKrakenOptions():
 class Options(argparse.ArgumentParser):
     def __init__(self, prog=NAME, epilog=None):
         usage = col.purple(sequana_prolog.format(**{"name": NAME}))
-        super(Options, self).__init__(usage=usage, prog=prog, description="",
+        super(Options, self).__init__(
+            usage=usage,
+            prog=prog,
+            description="",
             epilog=epilog,
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         )
         # add a new group of options to the parser
         so = SlurmOptions()
@@ -99,19 +103,18 @@ def main(args=None):
 
     # whatever needs to be called by all pipeline before the options parsing
     from sequana_pipetools.options import before_pipeline
+
     before_pipeline(NAME)
 
     # option parsing including common epilog
     options = Options(NAME, epilog=sequana_epilog).parse_args(args[1:])
-
-
-    from sequana.pipelines_common import SequanaManager
 
     # the real stuff is here
     manager = SequanaManager(options, NAME)
 
     # create the beginning of the command and the working directory
     manager.setup()
+    from sequana import logger
 
     # fill the config file with input parameters
 
@@ -132,6 +135,8 @@ def main(args=None):
                                      for x in options.kraken_databases]
             for this in options.kraken_databases:
                 manager.exists(this)
+            # if a DB is provided, let us update this field:
+            cfg.kraken.do = True
 
     # finalise the command and save it; copy the snakemake. update the config
     # file and save it.

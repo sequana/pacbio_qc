@@ -3,14 +3,15 @@ import os
 import tempfile
 import subprocess
 import sys
-from sequana.pipelines_common import get_pipeline_location as getpath
-
-sharedir = getpath('pacbio_qc')
 
 
-def _test_standalone_subprocess():
+from . import test_dir
+sharedir = f"{test_dir}/data"
+
+
+def test_standalone_subprocess():
     directory = tempfile.TemporaryDirectory()
-    cmd = """sequana_pipelines_pacbio_qc --input-directory {} 
+    cmd = """sequana_pacbio_qc --input-directory {} 
             --working-directory {} --force""".format(sharedir, directory.name)
     subprocess.call(cmd.split())
 
@@ -25,7 +26,7 @@ def test_standalone_script():
 def test_full1():
     with tempfile.TemporaryDirectory() as directory:
         wk = directory
-        cmd = "sequana_pipelines_pacbio_qc --input-directory {} "
+        cmd = "sequana_pacbio_qc --input-directory {} "
         cmd += "--working-directory {}  --force "
         cmd = cmd.format(sharedir, wk)
         subprocess.call(cmd.split())
@@ -38,7 +39,7 @@ def test_full2():
     with tempfile.TemporaryDirectory() as directory:
         wk = directory
         database=os.path.expanduser("~/.config/sequana/kraken_toydb")
-        cmd = "sequana_pipelines_pacbio_qc --input-directory {} "
+        cmd = "sequana_pacbio_qc --input-directory {} "
         cmd += "--working-directory {}  --force --do-kraken --kraken-databases {}"
         cmd = cmd.format(sharedir, wk, database)
         subprocess.call(cmd.split())
@@ -47,6 +48,6 @@ def test_full2():
         assert os.path.exists(wk + "/multiqc/multiqc_report.html")
 
 def test_version():
-    cmd = "sequana_pipelines_pacbio_qc --version"
+    cmd = "sequana_pacbio_qc --version"
     subprocess.call(cmd.split())
 

@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 #
 #  This file is part of Sequana software
 #
-#  Copyright (c) 2016-2020 - Sequana Development Team
+#  Copyright (c) 2016-2021 - Sequana Development Team
 #
 #  File author(s):
 #      Thomas Cokelaer <thomas.cokelaer@pasteur.fr>
@@ -18,14 +17,15 @@
 import os
 
 from sequana import pacbio, sequana_data
-from sequana import snaketools as sm
+from sequana_pipetools import snaketools as sm
 
+# ========================================================= The main config file
 # This must be defined before the include
 configfile: "config.yaml"
 
-# Generic include of some dynamic modules
 
-# A convenient manager
+
+# A convenient function for naming samples
 def func(filename):
     # pacbio data are either BAM of FastQ files
     # if BAM, they may contain a .css.bam extension if the data is made of CCS
@@ -33,39 +33,51 @@ def func(filename):
     # lbc32-lbc32 and so on. So a file may be called lima_output.lbc32.ccs.bam
     # and the next one lima_output.lb33.ccs.bam. Therefore the sample name is
     # only contaons in the barcode. Removing .ccs.bam is a solution
-    # So we will remove the first extension (e.g. .bam, .fastq) including
+    # So we will remove the first extension (e.g. .bam) including
     # possible compressed extension
     filename = filename.split("/")[-1]
     if filename.endswith(".bam"):
         return filename.rsplit(".bam")[0]
-    elif filename.endswith(".fastq"):
-        return filename.rsplit(".fastq")[0]
-    elif filename.endswith(".fastq.gz"):
-        return filename.rsplit(".fastq.gz")[0]
     else:
-        raise IOError("Input files must end in .bam, .fastq, or .fastq.gz")
+        raise IOError("Input files must end in .bam")
+
+
+# ================================================== The sequana pipeline manager
 manager = sm.PipelineManagerGeneric("pacbio_qc", config, sample_func=func)
 manager.setup(globals(), mode="warning")
+if len(manager.samples) == 0:
+    logger.error("Could not find any sample")
+    sys.exit(1)
 
 
-input_data = manager.getrawdata()
+# =========================================================  Final results
+rule pipeline:
+    input:
+        expand("{sample}/summary.html", sample=manager.samples),
+        ".sequana/rulegraph.svg",
+        "multiqc/multiqc_report.html", "summary.json"
 
 
 to_clean = []
 
-# Convert the BAM to fasta
-__bam_to_fasta__input_bam = input_data
-__bam_to_fasta__output_fasta = "{sample}.fasta"
-include: sm.modules["bam_to_fasta"]
-to_clean = []
+# =========================================================  bam to fasta (for kraken)
+if config['kraken']['do']:
+    rule bam_to_fasta:
+        input: manager.getrawdata()
+        output: temp("tmp/{sample}.fasta")
+        threads: config['bam_to_fasta']['thread']
+        run:
+            from sequana import pacbio
+            p = pacbio.PacbioSubreads(input[0])
+            p.to_fasta(output[0], threads=threads)
 
 
-# Analysis the input Fasta , create pictures and summary file
-__pacbio_quality__input = input_data
+
+# Analysis the input BAM/Fastq , create pictures and summary file
+__pacbio_quality__input = manager.getrawdata()
 __pacbio_quality__sample_name = "{sample}"
 __pacbio_quality__output_summary = "{sample}/sequana_summary_pacbio_qc_{sample}.json"
 include: sm.modules["pacbio_quality"]
-to_clean.extend(expand(__bam_to_fasta__output_fasta, sample=manager.samples))
 
 
 # default output for the html_reports rule
@@ -74,17 +86,8 @@ __html_report__input =  ["{sample}/sequana_summary_pacbio_qc_{sample}.json"]
 # Do we need the kraken output ? if so, fill variables
 extra_kraken = []
 if config['kraken']['do'] is True:
-    __kraken__html_output = "{sample}/kraken/kraken.html"
-    extra_kraken = expand(__kraken__html_output, sample=manager.samples)
-    __html_report__input +=  [__kraken__html_output]
-
-
-# Final results
-rule pipeline:
-    input:
-        expand("{sample}/summary.html", sample=manager.samples), 
-        ".sequana/rulegraph.svg",
-        "multiqc/multiqc_report.html", "summary.json"
+    extra_kraken = expand("{sample}/kraken/kraken.html", sample=manager.samples)
+    __html_report__input +=  ["{sample}/kraken/kraken.html"]
 
 
 # HTML reports
@@ -114,9 +117,6 @@ rule html_report:
             from sequana.modules_report.kraken import KrakenModule
             kr = KrakenModule(params.dir_kraken, output_filename=None)
             html = kr._get_summary_section()
-            #toreplace = "./kraken/kraken.html"
-            #target = params.dir_kraken + "kraken.html"
-            #html = html.replace(toreplace, target)
             m.sections.append({
               "name": "Taxonomic content",
               "anchor": "kraken",
@@ -129,7 +129,7 @@ rule html_report:
 
 # The kraken analysis
 rule kraken:
-    input: "{sample}.fasta"
+    input: temp("tmp/{sample}.fasta")
     output: "{sample}/kraken/kraken.html"
     params:
         databases=config['kraken']['databases']
@@ -141,23 +141,19 @@ rule kraken:
             cmd += " {} ".format(dbname)
         shell(cmd)
 
-# FIXME resuse existing rules from sequana
-rule multiqc:
-    input: expand(__pacbio_quality__output_summary, sample=manager.samples) + extra_kraken
-    output: "multiqc/multiqc_report.html"
-    params:
-        config="multiqc_config.yaml"
-    run:
-        from subprocess import Popen
-        cmd = "multiqc . -f -m sequana_pacbio_qc -c {} -o multiqc".format(params.config)
-        process = Popen(cmd.split(), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-        process.wait()
+
+# ========================================================== multiqc
+
+
+sequana_multiqc_input = expand(__pacbio_quality__output_summary, sample=manager.samples) + extra_kraken
+include: sm.modules["multiqc/2.0"]
 
 
 rule plotting_and_stats:
     input: expand(__pacbio_quality__output_summary, sample=manager.samples)
     output: "summary.json"#, "summary.png"
     run:
+        import json
         from sequana.summary import Summary
         from sequana_pipelines.pacbio_qc import version
 
@@ -165,7 +161,6 @@ rule plotting_and_stats:
         summary.description = "summary sequana_pacbio_qc pipeline"
         summary.pipeline_version = version
 
-        import json
         for filename in input:
             data = json.load(open(filename, 'r'))
             sample = data['sample']
@@ -175,16 +170,12 @@ rule plotting_and_stats:
         summary.to_json("summary.json")
 
 
-
-__rulegraph__input = manager.snakefile
-__rulegraph__output = ".sequana/rulegraph.svg"
-__rulegraph__mapper = {"multiqc": "../multiqc/multiqc_report.html"}
+sequana_rulegraph_mapper = {"multiqc": "../multiqc/multiqc_report.html"}
 include: sm.modules['rulegraph']
-localrules: rulegraph
 
 
 
-localrules: multiqc, rulegraph
+localrules: multiqc, rulegraph, plotting_and_stats
 
 
 onsuccess:
@@ -195,9 +186,8 @@ onsuccess:
     # This was create by calling Module but is not needed
     shell('rm -rf css images js')
 
-
     from sequana import logger
-    logger.level = "INFO"
+    logger.setLevel("INFO")
 
     # This should create the stats plot and the Makefile
     manager.teardown()
@@ -208,20 +198,26 @@ onsuccess:
     from sequana.utils.datatables_js import DataTable
     import json
 
-    # Summary table with links towards fastqc 
+    # Summary table with links towards fastqc
     data = json.load(open("summary.json", "r"))
     df = pd.DataFrame(data['data'])
     df = df.T
     del df['sample']
     df = df.reset_index().rename({'index': 'sample'}, axis=1)
-    for col in ['count', 'nb_reads', 'nb_bases', 'min', 'max', 'CCS_mean_passes', 'CCS_nb_reads']:
+    for col in ['count', 'nb_reads', 'nb_bases', 'min', 'max']:
         try: df[col] = [int(x) for x in df[col]]
         except: pass
-    for col in ['mean', 'mean_GC', 'std']:
+    for col in ['mean', 'mean_GC', 'std', "mean_passes"]:
         try: df[col] = [round(float(x), 2) for x in df[col]]
         except: pass
-    for col in ['25%','50%','75%']:
+    for col in ["25%","50%","75%", "count"]:
         del df[col]
+    df = df.rename({
+            "min":"min_read_length", 
+            "max":"max_read_length",
+            "std":"std_read_length",
+            "mean":"mean_length"}, axis=1)
+
 
     df['link'] = ["{}/summary.html".format(x) for x in df['sample']] 
 
@@ -254,7 +250,7 @@ onsuccess:
     from sequana.modules_report.summary import SummaryModule2
     data = {
             "name": manager.name,
-            "rulegraph": __rulegraph__output,
+            "rulegraph": ".sequana/rulegraph.svg",
             "stats": "stats.txt",
             "pipeline_version": vv
 
@@ -280,7 +276,10 @@ onsuccess:
     shell("rm -rf rulegraph")   # embedded in report
     shell("chmod -R g+w .")
 
-
+onerror:
+    from sequana_pipetools.errors import PipeError
+    p = PipeError("pacbio_qc")
+    p.status()
 
 
 

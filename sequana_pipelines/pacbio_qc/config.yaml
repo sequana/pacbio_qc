@@ -6,9 +6,9 @@
 # If input_directory provided, use it otherwise if input_pattern provided,
 # use it, otherwise use input_samples.
 # ============================================================================
-input_directory: "%(input_directory)s"
-input_readtag: "%(input_readtag)s"
-input_pattern: "%(input_pattern)s"
+input_directory: /home/cokelaer/Data/Pacbio/pacbio_qc/data
+input_readtag: ''
+input_pattern: '*.bam'
 
 
 bam_to_fasta:
@@ -21,7 +21,24 @@ bam_to_fasta:
 # Provide as many databases as you want. They will be 
 # used sequentially.
 kraken:
-    do: no
+    do: true
     thread: 4
     databases:
-        - toydb
+        - ~/.config/sequana/kraken2_dbs/viruses_masking/
+
+
+##############################################################################
+# MultiQC section
+#
+# :Parameters:
+#
+# - options: string with any valid MultiQC options
+
+multiqc:
+    input_directory: .
+    options: -p -f
+    modules: " pacbio_qc"
+    config_file: ""
+
+
+

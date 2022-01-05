@@ -10,8 +10,9 @@
 
 This is is the **pacbio_qc** pipeline from the `Sequana <https://sequana.readthedocs.org>`_ projet
 
-:Overview: Quality control for pacbio BAM files (raw data or CCS files)
-:Input: BAM files provided by Pacbio Sequencers
+:Overview: Quality control for pacbio datafiles (raw data or CCS files). 
+
+:Input: BAM files provided by Pacbio Sequencers. 
 :Output: HTML reports with various plots including taxonomic plot
 :Status: production
 :Citation: Cokelaer et al, (2017), ‘Sequana’: a Set of Snakemake NGS pipelines, Journal of Open Source Software, 2(16), 352, JOSS DOI doi:10.21105/joss.00352
@@ -20,13 +21,11 @@ This is is the **pacbio_qc** pipeline from the `Sequana <https://sequana.readthe
 Installation
 ~~~~~~~~~~~~
 
-You must install Sequana first::
-
-    pip install sequana
-
-Then, just install this package::
+Just install this package::
 
     pip install sequana_pacbio_qc
+
+You will need **kraken2** (optional) for the taxonomic analysis.
 
 
 Usage
@@ -34,11 +33,11 @@ Usage
 
 ::
 
-    sequana_pipelines_pacbio_qc --help
-    sequana_pipelines_pacbio_qc --input-directory DATAPATH
+    sequana_pacbio_qc --help
+    sequana_pacbio_qc --input-directory DATAPATH
 
 
-iIf you want to filter out some BAM files, you may use the pattern in tab 'input data'.
+If you want to filter out some BAM files, you may use the pattern in tab 'input data'.
 
 In the configuration tab, in the kraken section add as many databases
 as you wish. You may simply unset the first database to skip the taxonomy, which
@@ -67,7 +66,7 @@ This pipelines requires the following executable(s):
 - kraken2
 - multiqc
 
-.. image:: https://raw.githubusercontent.com/sequana/sequana_pacbio_qc/master/sequana_pipelines/pacbio_qc/dag.png
+.. image:: https://raw.githubusercontent.com/sequana/pacbio_qc/master/sequana_pipelines/pacbio_qc/dag.png
 
 
 Details
@@ -75,12 +74,12 @@ Details
 
 This pipeline takes as inputs a set of BAM files from Pacbio sequencers. It
 computes a set of basic statistics related to the read lengths. It also shows
-some histograms related to the GC content, SNR of the diodes and the so-called ZMW
-values. Finally, a quick taxonomy can be performed using Kraken. HTML reports
+some histograms related to the GC content, SNR of the diodes and the number of passes
+ Finally, a quick taxonomy can be performed using Kraken. HTML reports
 are created for each sample as well as a multiqc summary page.
 
 Kraken databases are not provided with the pipeline. This step is optional and
-not used by default. 
+not used by default.
 
 
 Changelog
@@ -88,6 +87,7 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
+0.10.0    Update to use latest tools from sequana framework
 0.9.0     First release of sequana_pacbio_qc using latest sequana rules and
           modules (0.9.5)
 ========= ====================================================================
