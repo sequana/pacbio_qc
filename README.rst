@@ -7,6 +7,9 @@
     :target: http://joss.theoj.org/papers/10.21105/joss.00352
     :alt: JOSS (journal of open source software) DOI
 
+.. image:: https://github.com/sequana/pacbio_qc/actions/workflows/main.yml/badge.svg
+   :target: https://github.com/sequana/pacbio_qc/actions/workflows    
+
 
 This is is the **pacbio_qc** pipeline from the `Sequana <https://sequana.readthedocs.org>`_ projet
 
@@ -15,6 +18,7 @@ This is is the **pacbio_qc** pipeline from the `Sequana <https://sequana.readthe
 :Input: BAM files provided by Pacbio Sequencers. 
 :Output: HTML reports with various plots including taxonomic plot
 :Status: production
+:Documentation: This README file, the Wiki from the github repository (link above) and https://sequana.readthedocs.io
 :Citation: Cokelaer et al, (2017), ‘Sequana’: a Set of Snakemake NGS pipelines, Journal of Open Source Software, 2(16), 352, JOSS DOI doi:10.21105/joss.00352
 
 
