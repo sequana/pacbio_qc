@@ -129,7 +129,7 @@ rule html_report:
 
 # The kraken analysis
 rule kraken:
-    input: temp("tmp/{sample}.fasta")
+    input: "tmp/{sample}.fasta"
     output: "{sample}/kraken/kraken.html"
     params:
         databases=config['kraken']['databases']
