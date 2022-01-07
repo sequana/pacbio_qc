@@ -1,5 +1,5 @@
 recursive-exclude * __pycache__
 recursive-exclude * *pyc
-recursive-exclude * doc/wiki
+recursive-exclude test *
 include requirements*txt
 include README.rst

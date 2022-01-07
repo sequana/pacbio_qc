@@ -79,7 +79,7 @@ Details
 This pipeline takes as inputs a set of BAM files from Pacbio sequencers. It
 computes a set of basic statistics related to the read lengths. It also shows
 some histograms related to the GC content, SNR of the diodes and the number of passes
- Finally, a quick taxonomy can be performed using Kraken. HTML reports
+Finally, a quick taxonomy can be performed using Kraken. HTML reports
 are created for each sample as well as a multiqc summary page.
 
 Kraken databases are not provided with the pipeline. This step is optional and
