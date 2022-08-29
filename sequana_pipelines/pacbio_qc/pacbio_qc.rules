@@ -25,7 +25,6 @@ configfile: "config.yaml"
 
 
 
-# A convenient function for naming samples
 def func(filename):
     # pacbio data are either BAM of FastQ files
     # if BAM, they may contain a .css.bam extension if the data is made of CCS
@@ -43,8 +42,7 @@ def func(filename):
 
 
 # ================================================== The sequana pipeline manager
-manager = sm.PipelineManagerGeneric("pacbio_qc", config, sample_func=func)
-manager.setup(globals(), mode="warning")
+manager = sm.PipelineManager("pacbio_qc", config, sample_func=func)
 if len(manager.samples) == 0:
     logger.error("Could not find any sample")
     sys.exit(1)
@@ -63,21 +61,119 @@ to_clean = []
 # =========================================================  bam to fasta (for kraken)
 if config['kraken']['do']:
     rule bam_to_fasta:
-        input: manager.getrawdata()
-        output: temp("tmp/{sample}.fasta")
-        threads: config['bam_to_fasta']['thread']
+        input:
+            manager.getrawdata()
+        output:
+            temp("tmp/{sample}.fasta")
+        threads:
+            config['bam_to_fasta']['thread']
         run:
             from sequana import pacbio
-            p = pacbio.PacbioSubreads(input[0])
-            p.to_fasta(output[0], threads=threads)
+            if input[0].endswith(".bam"):
+                p = pacbio.PacbioSubreads(input[0])
+                p.to_fasta(output[0], threads=threads)
+            else:
+                from sequana import FastQ
+                f = FastQ(input[0])
+                f.to_fasta(output[0])
 
 
 
 # Analysis the input BAM/Fastq , create pictures and summary file
-__pacbio_quality__input = manager.getrawdata()
-__pacbio_quality__sample_name = "{sample}"
-__pacbio_quality__output_summary = "{sample}/sequana_summary_pacbio_qc_{sample}.json"
-include: sm.modules["pacbio_quality"]
+
+
+rule pacbio_quality:
+    """Pacbio quality control
+
+    Required input:
+        - __pacbio_quality__input : the input BAM file
+
+    Required output:
+        - __pacbio_quality__output_summary: summary_{sample}.json
+
+    Optional parameters:
+        - __pacbio_quality__images_directory: where to save PNG
+          images (default to ./images)
+
+    In addition to a summary file with basic statistics, this
+    rules creates 5 images with basic histograms about the read
+    lengths, the GC content, the ZMW information, the SNR of the
+    A,C,G,T nucleotides, and a 2D histogram of GC versus read length
+
+    References:
+        `sequana.pacbio <http://sequana.readthedocs.io/en/master/references.html#sequana.pacbio.PacbioSubreads>`_
+
+    """
+    input: manager.getrawdata()
+    params:
+        sample_name = "{sample}"
+    output:
+        read_len   = "{sample}/images/hist_read_len_{sample}.png",
+        GC_content = "{sample}/images/GC_content_{sample}.png",
+        ZMW        = "{sample}/images/ZMW_passes_{sample}.png",
+        SNR        = "{sample}/images/SNR_{sample}.png",
+        GC_vs_len  = "{sample}/images/GC_vs_len_{sample}.png",
+        summary    = "{sample}/sequana_summary_pacbio_qc_{sample}.json"
+    run:
+        from sequana import pacbio
+        import pylab
+        def setname(name):
+            return name
+        ########## labels for plots
+        short_name = input[0].replace(".bam","").split("/")[-1]
+        bam_pacbio = pacbio.PacbioSubreads(input[0])
+
+        ########## Read length
+        # individual histograms
+        bam_pacbio.hist_read_length(label=short_name)
+        pylab.title("")
+        pylab.legend()
+        pylab.savefig(setname(output.read_len))
+
+        ########## GC content
+        # individual histograms
+        bam_pacbio.hist_GC(label=short_name)
+        pylab.title("")
+        pylab.legend()
+        pylab.savefig(setname(output.GC_content))
+
+        ########## ZMW passes
+        # individual histograms
+        bam_pacbio.hist_nb_passes(label=short_name, bins=20)
+        pylab.title("")
+        pylab.legend()
+        pylab.savefig(setname(output.ZMW))
+
+        ########## SNR
+        # individual histograms
+        bam_pacbio.hist_snr()
+        pylab.title("")
+        pylab.savefig(setname(output.SNR))
+
+        # plot GC versus read length
+        bam_pacbio.plot_GC_read_len()
+        pylab.title("")
+        pylab.savefig(setname(output.GC_vs_len))
+
+        # summary
+        summary = bam_pacbio.summary()
+        with open(output.summary, "w") as fh:
+            summary.update(
+                {"images":
+                    {"hist_read_length": output.read_len,
+                    "hist_gc_content": output.GC_content,
+                    "hist_snr": output.SNR,
+                    "gc_vs_length": output.GC_vs_len,
+                    "hist_zmw": output.ZMW}
+                })
+            summary.update({'sample': params.sample_name})
+            summary.update({'generator': "sequana_pacbio_quality"})
+            json.dump(summary, fh, indent=True, sort_keys=True)
+        pylab.close()
+
+
+
+
 
 
 # default output for the html_reports rule
@@ -92,8 +188,10 @@ if config['kraken']['do'] is True:
 
 # HTML reports
 rule html_report:
-    input:  __html_report__input
-    output: "{sample}/summary.html"
+    input:
+        __html_report__input
+    output:
+        "{sample}/summary.html"
     params:
         dir_kraken="{sample}/kraken",
         dir="{sample}"
@@ -129,11 +227,14 @@ rule html_report:
 
 # The kraken analysis
 rule kraken:
-    input: "tmp/{sample}.fasta"
-    output: "{sample}/kraken/kraken.html"
+    input:
+        "tmp/{sample}.fasta"
+    output:
+        "{sample}/kraken/kraken.html"
     params:
         databases=config['kraken']['databases']
-    threads: config['kraken']['thread']
+    threads:
+        config['kraken']['thread']
     run:
         cmd = "sequana_taxonomy --file1 {input} --output-directory {wildcards.sample} --thread {threads} "
         cmd += " --databases "
@@ -145,12 +246,14 @@ rule kraken:
 # ========================================================== multiqc
 
 
-sequana_multiqc_input = expand(__pacbio_quality__output_summary, sample=manager.samples) + extra_kraken
+sequana_multiqc_input = expand("{sample}/sequana_summary_pacbio_qc_{sample}.json", 
+    sample=manager.samples) + extra_kraken
 include: sm.modules["multiqc/2.0"]
 
 
 rule plotting_and_stats:
-    input: expand(__pacbio_quality__output_summary, sample=manager.samples)
+    input: expand("{sample}/sequana_summary_pacbio_qc_{sample}.json", sample=manager.samples)
+
     output: "summary.json"#, "summary.png"
     run:
         import json

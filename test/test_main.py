@@ -6,7 +6,7 @@ import sys
 
 
 from . import test_dir
-sharedir = f"{test_dir}/data"
+sharedir = f"{test_dir}/data/"
 
 
 def test_standalone_subprocess():
@@ -27,7 +27,7 @@ def test_full1():
     with tempfile.TemporaryDirectory() as directory:
         wk = directory
         cmd = "sequana_pacbio_qc --input-directory {} "
-        cmd += "--working-directory {}  --force "
+        cmd += "--working-directory {}  --force --input-pattern lima_output*bam"
         cmd = cmd.format(sharedir, wk)
         subprocess.call(cmd.split())
 
@@ -39,7 +39,7 @@ def test_full2():
     with tempfile.TemporaryDirectory() as directory:
         wk = directory
         database=(f"{sharedir}/toydb")
-        cmd = "sequana_pacbio_qc --input-directory {} "
+        cmd = "sequana_pacbio_qc --input-directory {} --input-pattern lima*bam "
         cmd += "--working-directory {}  --force --do-kraken --kraken-databases {}"
         cmd = cmd.format(sharedir, wk, database)
         subprocess.call(cmd.split())
