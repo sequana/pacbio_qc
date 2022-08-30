@@ -140,7 +140,7 @@ def main(args=None):
 
     # finalise the command and save it; copy the snakemake. update the config
     # file and save it.
-    manager.teardown(check_fastq_files=False)
+    manager.teardown() 
 
     if options.run:
         subprocess.Popen(["sh", '{}.sh'.format(NAME)], cwd=options.workdir)

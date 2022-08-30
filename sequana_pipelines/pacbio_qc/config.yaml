@@ -10,6 +10,10 @@ input_directory: /home/cokelaer/Data/Pacbio/pacbio_qc/data
 input_readtag: ''
 input_pattern: '*.bam'
 
+# if you have some samples starting with prefix to bed removed, 
+# uncomment this line and fill the list , 
+# extra_prefixes_to_strip: ["lima_output"]
+
 
 bam_to_fasta:
     thread: 4
@@ -21,7 +25,7 @@ bam_to_fasta:
 # Provide as many databases as you want. They will be 
 # used sequentially.
 kraken:
-    do: true
+    do: false
     thread: 4
     databases:
         - ~/.config/sequana/kraken2_dbs/viruses_masking/
