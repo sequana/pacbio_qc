@@ -91,6 +91,7 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
+0.11.0    Release to use latests sequana_pipetools framework
 0.10.0    Update to use latest tools from sequana framework
 0.9.0     First release of sequana_pacbio_qc using latest sequana rules and
           modules (0.9.5)
