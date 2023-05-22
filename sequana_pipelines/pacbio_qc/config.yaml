@@ -10,9 +10,15 @@ input_directory: /home/cokelaer/Data/Pacbio/pacbio_qc/data
 input_readtag: ''
 input_pattern: '*.bam'
 
-# if you have some samples starting with prefix to bed removed, 
-# uncomment this line and fill the list , 
+# if you have some samples starting with prefix to bed removed,
+# uncomment this line and fill the list ,
 # extra_prefixes_to_strip: ["lima_output"]
+
+
+apptainers:
+    graphviz: "https://zenodo.org/record/7928262/files/graphviz_7.0.5.img"
+    sequana: "https://zenodo.org/record/7341710/files/sequana_tools_0.14.5.img"
+
 
 
 bam_to_fasta:
@@ -41,8 +47,8 @@ kraken:
 multiqc:
     input_directory: .
     options: -p -f
-    modules: " pacbio_qc"
-    config_file: ""
+    modules: sequana_pacbio_qc
+    config_file: ''
 
 
 

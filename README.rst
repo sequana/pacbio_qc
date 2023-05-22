@@ -10,6 +10,16 @@
 .. image:: https://github.com/sequana/pacbio_qc/actions/workflows/main.yml/badge.svg
    :target: https://github.com/sequana/pacbio_qc/actions/workflows    
 
+.. image:: https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C3.10-blue.svg
+    :target: https://pypi.python.org/pypi/sequana
+    :alt: Python 3.8 | 3.9 | 3.10
+
+.. image:: http://joss.theoj.org/papers/10.21105/joss.00352/status.svg
+   :target: http://joss.theoj.org/papers/10.21105/joss.00352
+   :alt: JOSS (journal of open source software) DOI
+
+|Codacy-Grade|
+
 
 This is is the **pacbio_qc** pipeline from the `Sequana <https://sequana.readthedocs.org>`_ projet
 
@@ -91,6 +101,7 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
+1.0.0     Uses latest wrappers and graphviz apptainers
 0.11.0    Release to use latests sequana_pipetools framework
 0.10.0    Update to use latest tools from sequana framework
 0.9.0     First release of sequana_pacbio_qc using latest sequana rules and
@@ -111,4 +122,9 @@ Rules and configuration details
 
 Here is the `latest documented configuration file <https://raw.githubusercontent.com/sequana/sequana_pacbio_qc/main/sequana_pipelines/pacbio_qc/config.yaml>`_
 to be used with the pipeline. Each rule used in the pipeline may have a section in the configuration file. 
+
+
+
+.. |Codacy-Grade| image:: https://app.codacy.com/project/badge/Grade/9b8355ff642f4de9acd4b270f8d14d10
+   :target: https://www.codacy.com/gh/sequana/pacbio_qc/dashboard
 

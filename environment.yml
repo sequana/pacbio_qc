@@ -1,0 +1,13 @@
+name: mapper
+
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  - kraken2
+  - pip:
+    - sequana
+
+

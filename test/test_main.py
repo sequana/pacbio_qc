@@ -11,7 +11,7 @@ sharedir = f"{test_dir}/data/"
 
 def test_standalone_subprocess():
     directory = tempfile.TemporaryDirectory()
-    cmd = """sequana_pacbio_qc --input-directory {} 
+    cmd = """sequana_pacbio_qc --input-directory {}
             --working-directory {} --force""".format(sharedir, directory.name)
     subprocess.call(cmd.split())
 
@@ -19,7 +19,7 @@ def test_standalone_subprocess():
 def test_standalone_script():
     directory = tempfile.TemporaryDirectory()
     import sequana_pipelines.pacbio_qc.main as m
-    sys.argv = ["test", "--input-directory", sharedir, 
+    sys.argv = ["test", "--input-directory", sharedir,
             "--working-directory", directory.name, "--force"]
     m.main()
 
@@ -27,7 +27,7 @@ def test_full1():
     with tempfile.TemporaryDirectory() as directory:
         wk = directory
         cmd = "sequana_pacbio_qc --input-directory {} "
-        cmd += "--working-directory {}  --force --input-pattern lima_output*bam"
+        cmd += "--working-directory {}  --force --input-pattern lima*bam  "
         cmd = cmd.format(sharedir, wk)
         subprocess.call(cmd.split())
 
