@@ -22,7 +22,7 @@ from sequana_pipetools import snaketools as sm
 # ========================================================= The main config file
 # This must be defined before the include
 configfile: "config.yaml"
-
+sequana_wrapper_branch = "main"
 
 
 def func(filename):
@@ -56,8 +56,6 @@ rule pipeline:
         "multiqc/multiqc_report.html", "summary.json"
 
 
-to_clean = []
-
 # =========================================================  bam to fasta (for kraken)
 if config['kraken']['do']:
     rule bam_to_fasta:
@@ -68,12 +66,11 @@ if config['kraken']['do']:
         threads:
             config['bam_to_fasta']['thread']
         run:
-            from sequana import pacbio
+            from sequana import pacbio, FastQ
             if input[0].endswith(".bam"):
                 p = pacbio.PacbioSubreads(input[0])
                 p.to_fasta(output[0], threads=threads)
             else:
-                from sequana import FastQ
                 f = FastQ(input[0])
                 f.to_fasta(output[0])
 
@@ -226,21 +223,23 @@ rule html_report:
 
 
 # The kraken analysis
-rule kraken:
+rule sequana_taxonomy:
     input:
         "tmp/{sample}.fasta"
     output:
         "{sample}/kraken/kraken.html"
     params:
         databases=config['kraken']['databases']
+    container:
+        config['apptainers']['sequana']
     threads:
         config['kraken']['thread']
-    run:
-        cmd = "sequana_taxonomy --file1 {input} --output-directory {wildcards.sample} --thread {threads} "
-        cmd += " --databases "
-        for dbname in params.databases:
-            cmd += " {} ".format(dbname)
-        shell(cmd)
+    shell:
+        """
+
+        sequana_taxonomy --file1 {input} --output-directory {wildcards.sample} --thread {threads} --databases {params.databases}
+
+        """
 
 
 # ========================================================== multiqc
@@ -248,7 +247,25 @@ rule kraken:
 
 sequana_multiqc_input = expand("{sample}/sequana_summary_pacbio_qc_{sample}.json", 
     sample=manager.samples) + extra_kraken
-include: sm.modules["multiqc/2.0"]
+
+
+#config['multiqc']['options'] = config["multiqc"]["options"] + f" --comment '{comments}'"
+
+
+rule multiqc:
+    input:
+        sequana_multiqc_input
+    output:
+        "multiqc/multiqc_report.html"
+    params:
+       options=config['multiqc']['options'],
+       input_directory=config['multiqc']['input_directory'],
+       config_file=config['multiqc']['config_file'],
+       modules=config['multiqc']['modules']
+    log:
+       "multiqc/multiqc.log"
+    wrapper:
+       f"{sequana_wrapper_branch}/wrappers/multiqc"
 
 
 rule plotting_and_stats:
@@ -273,8 +290,30 @@ rule plotting_and_stats:
         summary.to_json("summary.json")
 
 
-sequana_rulegraph_mapper = {"multiqc": "../multiqc/multiqc_report.html"}
-include: sm.modules['rulegraph']
+
+# ====================================================================== rulegraph
+
+rule rulegraph:
+    input: str(manager.snakefile)
+    output:
+        svg = "rulegraph/rulegraph.dot"
+    params:
+        mapper = {"multiqc": "../multiqc/multiqc_report.html"},
+        configname = "config.yaml"
+    wrapper:
+        f"{sequana_wrapper_branch}/wrappers/rulegraph"
+
+
+rule dot2svg:
+    input:
+        "rulegraph/rulegraph.dot"
+    output:
+        ".sequana/rulegraph.svg"
+    container:
+        config['apptainers']['graphviz']
+    shell:
+        """dot -Tsvg {input} -o {output}"""
+
 
 
 
@@ -282,11 +321,8 @@ localrules: multiqc, rulegraph, plotting_and_stats
 
 
 onsuccess:
-    for this in to_clean:
-        try:os.remove(this)
-        except:pass
 
-    # This was create by calling Module but is not needed
+    # This was created by calling Module but is not needed
     shell('rm -rf css images js')
 
     from sequana import logger

@@ -17,6 +17,11 @@ mapping:
         mapping:
            "thread":
                type: int
+
+    "apptainers":
+        type: any
+
+
     "multiqc":
         type: map
         mapping:

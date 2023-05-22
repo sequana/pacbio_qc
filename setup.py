@@ -1,7 +1,7 @@
 from setuptools import setup, find_namespace_packages
 
 _MAJOR               = 0
-_MINOR               = 11
+_MINOR               = 12
 _MICRO               = 0
 version              = '%d.%d.%d' % (_MAJOR, _MINOR, _MICRO)
 release              = '%d.%d' % (_MAJOR, _MINOR)
@@ -53,12 +53,18 @@ setup(
     packages = ["sequana_pipelines.pacbio_qc"],
 
     install_requires = open("requirements.txt").read(),
-
+    extras_require={
+        "testing": [
+            "pytest",
+            "pytest-cov",
+            "pytest-xdist",
+            "coveralls",
+        ],
+    },
     # This is recursive include of data files
     exclude_package_data = {"": ["__pycache__"]},
     package_data = {
-        '': ['*.yaml', "*.rules", "*.json", "requirements.txt", "*png"],
-
+        '': ['*.yaml', "*.rules", "*.json", "requirements.txt", "*png", "*yml", "*smk"]
         },
 
     zip_safe=False,
