@@ -39,7 +39,7 @@ Just install this package::
 
     pip install sequana_pacbio_qc
 
-You will need **kraken2** (optional) for the taxonomic analysis.
+You will need **samtools** and  **kraken2** (optional) for the taxonomic analysis.
 
 
 Usage
@@ -77,6 +77,7 @@ Requirements
 This pipelines requires the following executable(s):
 
 - sequana
+- samtools
 - kraken2
 - multiqc
 
