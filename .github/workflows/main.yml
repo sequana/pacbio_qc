@@ -36,8 +36,8 @@ jobs:
           extra-specs: |
             python=${{ matrix.python }}
 
-
-    - name: conda
+    - name: install package itself
+      shell: bash -l {0}
       run: |
         pip install .
 
