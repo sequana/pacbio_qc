@@ -112,6 +112,7 @@ rule pacbio_quality:
         GC_vs_len  = "{sample}/images/GC_vs_len_{sample}.png",
         summary    = "{sample}/sequana_summary_pacbio_qc_{sample}.json"
     run:
+        import json
         from sequana import pacbio
         import pylab
         def setname(name):

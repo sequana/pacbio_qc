@@ -102,6 +102,7 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
+1.0.1     fix missing import in the summary 
 1.0.0     Uses latest wrappers and graphviz apptainers
 0.11.0    Release to use latests sequana_pipetools framework
 0.10.0    Update to use latest tools from sequana framework
