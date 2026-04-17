@@ -8,6 +8,8 @@ channels:
 dependencies:
   - kraken2
   - samtools
+  - graphviz
+  - pulp>=2.8
   - pip:
     - sequana
 

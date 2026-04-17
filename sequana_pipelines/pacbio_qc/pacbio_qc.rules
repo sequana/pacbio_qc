@@ -294,15 +294,15 @@ rule sequana_taxonomy:
         "{sample}/kraken/kraken.html"
     params:
         databases=config['kraken']['databases']
+    log:
+        "{sample}/sequana_taxonomy.log"
     container:
         config['apptainers']['sequana']
     threads:
         config['kraken']['thread']
     shell:
         """
-
-        sequana_taxonomy --input-file1 {input} --output-directory {wildcards.sample} --thread {threads} --databases {params.databases}
-
+        sequana_taxonomy --input-file1 {input} --output-directory {wildcards.sample} --thread {threads} --databases {params.databases} >{log} 2>&1
         """
 
 
@@ -381,7 +381,7 @@ rule dot2svg:
 
 
 
-localrules: multiqc, rulegraph, plotting_and_stats
+localrules: multiqc, rulegraph, plotting_and_stats, dot2svg
 
 
 onsuccess:
